@@ -1,0 +1,192 @@
+## References:
+##https://www.analyticsvidhya.com/blog/2022/02/logistic-regression-using-python-and-excel/
+##https://medium.com/@draj0718/logistic-regression-with-standardscaler-from-the-scratch-ec01def674e8
+##https://medium.com/@diehardankush/how-implementing-decision-trees-in-python-with-scikit-learn-part-3-29e5a787baaf
+
+#importing needed tools 
+%matplotlib inline
+import numpy as np 
+import pandas as pd
+import seaborn as sns
+from sklearn import tree
+import matplotlib.pylab as plt
+from sklearn import preprocessing 
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split 
+
+#import red wine dataset 
+red_wine_data = pd.read_csv('winequality-red.csv')
+
+#shape of red wine dataframe 
+red_wine_data.shape
+
+#checking the data type of the red wine dataset 
+red_wine_data.dtypes
+
+#information on red wine dataset 
+red_wine_data.info()
+
+#first 5 rows of red wine dataframe 
+red_wine_data.head()
+
+#all columns in red wine dataframe 
+red_wine_data.columns
+
+#checking for missing values in red wine dataset 
+red_wine_data.isnull().sum()
+
+##no missing values##
+
+#checking for any duplicates in red wine dataset 
+red_wine_data.duplicated().sum()
+
+#duplicates in the red_wine_data 
+red_wine_data.loc[red_wine_data.duplicated(), :]
+
+#dropping duplicates in dataset 
+red_wine_data.drop_duplicates(inplace = True, keep = 'first')
+
+#check to see if the duplicates were handled in the dataset 
+red_wine_data.duplicated().sum()
+
+#untouched red wine data
+red_wine_df = red_wine_data[['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar',
+       'chlorides', 'free sulfur dioxide', 'total sulfur dioxide', 'density',
+       'pH', 'sulphates', 'alcohol']]
+red_wine_untouched = sns.boxplot(data = red_wine_df, orient = "h", palette = "Set2")
+plt.show()
+
+##outliers analysis##
+
+#calculate z-score of column 'quality'
+z_score_rw = stats.zscore(red_wine_data['quality'])
+
+#identify outliers with a z-score of greater than 3 or less than -3 
+outliers_rw = red_wine_data[(z_score_rw > 3) | (z_score_rw < -3)]
+outliers_rw 
+
+#10 outliers based on 'quality'
+fig, red_wine_untouched = plt.subplots(figsize=(10, 10))
+sns.boxplot(x=red_wine_data['quality'], ax = red_wine_untouched)
+red_wine_untouched.set_title('Quality of Red Wine', fontsize = 15)
+plt.show()
+
+#understanding the boxplot data of quality red wine 
+red_wine_data['quality'].describe()
+
+#filtering the dataframe to only include outlier with a quality over 7 
+outlier_rw_qua_1 = red_wine_data[red_wine_data['quality'] > 7]
+#calculating the percentage of outlier_rw_qua_1 
+per_out_rw_qua_1 = (len(outlier_rw_qua_1) / len(red_wine_data)) * 100
+per_out_rw_qua_1
+
+#filtering the dataframe to only include outlier with a quality under 4 
+outlier_rw_qua_2 = red_wine_data[red_wine_data['quality'] < 4]
+#calculating the percentage of outlier_rw_qua_2
+per_out_rw_qua_2 = (len(outlier_rw_qua_2) / len(red_wine_data)) * 100
+per_out_rw_qua_2
+
+#handling the outliers in red_wine_data
+red_wine_data['quality'] = mstats.winsorize(red_wine_data['quality'], limits = [0.01, 0.1])
+
+red_wine_data['quality'].sort_values(ascending = False).head(10)
+
+#winsorize outliers in 'quality'
+fig, red_wine_winsorize = plt.subplots(figsize = (10,10))
+sns.boxplot(x = red_wine_data['quality'], ax = red_wine_winsorize)
+red_wine_winsorize.set_title('Distribution of the Quality of Red Wine')
+plt.show()
+
+red_wine_data['quality'].describe()
+
+#re-looking at dataset shape after dealing with duplicates and outliers 
+red_wine_data.shape
+
+#checking unique elements 
+red_wine_data['quality'].unique()
+
+#binarization of the target variable, using list comprehension
+red_wine_data['quality'] = [1 if x>=7 else 0 for x in red_wine_data['quality']]
+red_wine_data['quality'].unique()
+
+#splitting into train and test   
+X = red_wine_data.drop('quality' , axis = 1)
+y = red_wine_data['quality']
+red_wine_data.info()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
+
+#Decision Tree Classifier
+decTr_rw = DecisionTreeClassifier(random_state = 0, max_depth = 10)
+decTr_rw.fit(X_train, y_train)
+
+y_pred_decTr_rw = decTr_rw.predict(X_test)
+
+#checking accuracy 
+acc_decTr_rw = accuracy_score(y_test, y_pred_decTr_rw)
+print('The Accuracy for Test Set is: {}'.format(acc_decTr_rw *100))
+
+#creating conusion matrix for decTr 
+con_mat_decTr_rw = confusion_matrix(y_test, y_pred_decTr_rw)
+print(con_mat_decTr_rw)
+
+#creating the heatmap DecisionTreeClassier() 
+plt.figure(figsize = (12, 6))
+plt.title('Confusion Matrix for Quality of Red Wine (DecisionTreeClassifer())')
+sns.heatmap(con_mat_decTr_rw, annot = True, fmt = 'd', cmap = 'BuPu')
+plt.ylabel('Acutal Quality of Red Wine')
+plt.xlabel('Predicted Quality of Red Wine')
+plt.show()
+
+#RandomForestClassier() 
+ranFor_rw = RandomForestClassifier(random_state = 0, n_estimators=100, max_depth = 10)
+ranFor_rw.fit(X_train, y_train)
+
+y_pred_ranFor_rw = ranFor_rw.predict(X_test)
+
+#checking accuracy 
+acc_ranFor_rw = accuracy_score(y_test, y_pred_ranFor_rw)
+print('The Accuracy for Test Set is: {}'.format(acc_ranFor_rw *100))
+
+#creating conusion matrix for ranFor 
+con_mat_ranFor_rw = confusion_matrix(y_test, y_pred_ranFor_rw)
+print(con_mat_ranFor_rw)
+
+#creating the heatmap RandomForestClassier() 
+plt.figure(figsize = (12, 6))
+plt.title('Confusion Matrix for Quality of Red Wine (RandomForestClassifer())')
+sns.heatmap(con_mat_ranFor_rw, annot = True, fmt = 'd', cmap = 'BuPu')
+plt.ylabel('Acutal Quality of Red Wine')
+plt.xlabel('Predicted Quality of Red Wine')
+plt.show()
+
+#Logistic Regression 
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+rw_logic = LogisticRegression(random_state = 0) 
+rw_logic.fit(X_train , y_train)
+
+y_pred_logic_rw = rw_logic.predict(X_test)
+test_acc_rw = accuracy_score(y_test, y_pred_logic_rw)
+print('The Accuracy for Test Set is {}'.format(test_acc_rw * 100))
+
+
+#creating confusion matrix for logistic red wine dataset 
+con_mat_log = confusion_matrix(y_test, y_pred_logic_rw)
+print(con_mat_log)
+
+
+#creating the heatmap logistic 
+plt.figure(figsize = (12, 6))
+plt.title('Confusion Matrix for Quality of Red Wine (logistic Regression)')
+sns.heatmap(con_mat_log, annot = True, fmt = 'd', cmap = 'BuPu')
+plt.ylabel('Acutal Quality of Red Wine')
+plt.xlabel('Predicted Quality of Red Wine')
+plt.show()
+
+
