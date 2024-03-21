@@ -167,8 +167,8 @@ y_pred_logReg_rw = rw_logReg.predict(X_test)
 
 
 #checking accuracy 
-test_acc_logReg_rw = accuracy_score(y_test, y_pred_logReg_rw)
-print('The Accuracy for Test Set is {}'.format(test_acc_logReg_rw * 100))
+acc_logReg_rw = accuracy_score(y_test, y_pred_logReg_rw)
+print('The Accuracy for Test Set is {}'.format(acc_logReg_rw * 100))
 
 
 #creating confusion matrix for logistic red wine dataset 
